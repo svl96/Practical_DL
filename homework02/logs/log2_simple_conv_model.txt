@@ -1,0 +1,44 @@
+device cuda:0
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.001
+    weight_decay: 0
+)
+Batch size 200
+Run training
+Epoch [1/15] Time: 40.95s; Loss: 5.1427; Accuracy: 0.0209; ValLoss: 4.8885; ValAccuracy: 0.0434
+Epoch [2/15] Time: 41.19s; Loss: 4.7066; Accuracy: 0.0629; ValLoss: 4.6621; ValAccuracy: 0.0689
+Epoch [3/15] Time: 41.20s; Loss: 4.4137; Accuracy: 0.1010; ValLoss: 4.5030; ValAccuracy: 0.0900
+Epoch [4/15] Time: 41.38s; Loss: 4.0904; Accuracy: 0.1452; ValLoss: 4.4321; ValAccuracy: 0.1006
+Epoch [5/15] Time: 41.30s; Loss: 3.8773; Accuracy: 0.1770; ValLoss: 4.4474; ValAccuracy: 0.1030
+Epoch [6/15] Time: 41.36s; Loss: 3.7327; Accuracy: 0.1972; ValLoss: 4.4805; ValAccuracy: 0.1037
+Epoch [7/15] Time: 41.26s; Loss: 3.5670; Accuracy: 0.2235; ValLoss: 4.5023; ValAccuracy: 0.1078
+Epoch [8/15] Time: 41.56s; Loss: 3.4075; Accuracy: 0.2490; ValLoss: 4.6095; ValAccuracy: 0.1024
+Epoch [9/15] Time: 40.98s; Loss: 3.2860; Accuracy: 0.2684; ValLoss: 4.6331; ValAccuracy: 0.1034
+Epoch [10/15] Time: 40.78s; Loss: 3.1318; Accuracy: 0.2969; ValLoss: 4.6967; ValAccuracy: 0.1057
+Epoch [11/15] Time: 40.92s; Loss: 2.9256; Accuracy: 0.3319; ValLoss: 4.8483; ValAccuracy: 0.1063
+Epoch [12/15] Time: 40.95s; Loss: 2.7246; Accuracy: 0.3705; ValLoss: 4.9979; ValAccuracy: 0.1031
+Epoch [13/15] Time: 40.86s; Loss: 2.5034; Accuracy: 0.4132; ValLoss: 5.3595; ValAccuracy: 0.1008
+Epoch [14/15] Time: 40.80s; Loss: 2.2525; Accuracy: 0.4664; ValLoss: 5.6993; ValAccuracy: 0.1000
+Epoch [15/15] Time: 40.81s; Loss: 2.0032; Accuracy: 0.5197; ValLoss: 6.1167; ValAccuracy: 0.0953
+
+TEST Loss: 6.1167; Accuracy: 0.0953
+
+Sequential(
+  (0): Sequential(
+    (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): ReLU()
+    (2): MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=0, dilation=1, ceil_mode=False)
+  )
+  (1): Sequential(
+    (0): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): ReLU()
+    (2): MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=0, dilation=1, ceil_mode=False)
+  )
+  (2): Flatten()
+  (3): Linear(in_features=32768, out_features=200, bias=True)
+  (4): LogSoftmax()
+)
