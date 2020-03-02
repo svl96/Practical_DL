@@ -1,0 +1,46 @@
+device cuda:0
+Adam (
+Parameter Group 0
+    amsgrad: False
+    betas: (0.9, 0.999)
+    eps: 1e-08
+    lr: 0.001
+    weight_decay: 0
+)
+Batch size 200
+Run training
+Epoch [1/15] Time: 48.43s; Loss: 10.8003; Accuracy: 0.0617; ValLoss: 6.5753; ValAccuracy: 0.0961
+Epoch [2/15] Time: 48.49s; Loss: 4.6787; Accuracy: 0.1898; ValLoss: 4.6700; ValAccuracy: 0.1615
+Epoch [3/15] Time: 48.19s; Loss: 2.7169; Accuracy: 0.3914; ValLoss: 4.3359; ValAccuracy: 0.1857
+Epoch [4/15] Time: 48.28s; Loss: 1.5538; Accuracy: 0.6218; ValLoss: 5.1161; ValAccuracy: 0.1708
+Epoch [5/15] Time: 48.30s; Loss: 0.6925; Accuracy: 0.8249; ValLoss: 5.9809; ValAccuracy: 0.1654
+Epoch [6/15] Time: 48.29s; Loss: 0.2598; Accuracy: 0.9340; ValLoss: 6.7146; ValAccuracy: 0.1609
+Epoch [7/15] Time: 48.22s; Loss: 0.1167; Accuracy: 0.9720; ValLoss: 7.5197; ValAccuracy: 0.1572
+Epoch [8/15] Time: 48.25s; Loss: 0.0787; Accuracy: 0.9815; ValLoss: 8.0669; ValAccuracy: 0.1549
+Epoch [9/15] Time: 48.26s; Loss: 0.1539; Accuracy: 0.9568; ValLoss: 9.0983; ValAccuracy: 0.1452
+Epoch [10/15] Time: 49.60s; Loss: 0.7110; Accuracy: 0.8156; ValLoss: 9.3784; ValAccuracy: 0.1359
+Epoch [11/15] Time: 53.30s; Loss: 0.4223; Accuracy: 0.8814; ValLoss: 9.0421; ValAccuracy: 0.1530
+Epoch [12/15] Time: 51.13s; Loss: 0.0793; Accuracy: 0.9772; ValLoss: 9.1677; ValAccuracy: 0.1599
+Epoch [13/15] Time: 50.45s; Loss: 0.0154; Accuracy: 0.9979; ValLoss: 9.1439; ValAccuracy: 0.1641
+Epoch [14/15] Time: 48.97s; Loss: 0.0092; Accuracy: 0.9996; ValLoss: 9.1275; ValAccuracy: 0.1693
+Epoch [15/15] Time: 49.12s; Loss: 0.0106; Accuracy: 0.9996; ValLoss: 9.1353; ValAccuracy: 0.1702
+
+TEST Loss: 9.1353; Accuracy: 0.1702
+
+Sequential(
+  (0): Sequential(
+    (0): Conv2d(3, 64, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): ReLU()
+    (2): BatchNorm2d(64, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (3): MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=0, dilation=1, ceil_mode=False)
+  )
+  (1): Sequential(
+    (0): Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1))
+    (1): ReLU()
+    (2): BatchNorm2d(128, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True)
+    (3): MaxPool2d(kernel_size=(2, 2), stride=(2, 2), padding=0, dilation=1, ceil_mode=False)
+  )
+  (2): Flatten()
+  (3): Linear(in_features=32768, out_features=200, bias=True)
+  (4): LogSoftmax()
+)
