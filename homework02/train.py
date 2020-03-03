@@ -1,61 +1,25 @@
 import numpy as np
 from time import time
-import matplotlib.pyplot as plt
 import pandas as pd
 import argparse
 
 import torch
-from torch import nn
 import torchvision
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from dataset import ImgsDataset
 import matplotlib.pyplot as plt
 from torch.utils.checkpoint import checkpoint_sequential
-from utils import TimeProfiler, Accuracy
+from utils import TimeProfiler, Accuracy, plot_hist, get_test_data
+from cls_models import get_model, get_model_pretrained
 
 
 EPOCH_TIMER = 'epoch_timer'
 BATCH_TIMER = 'batch_timer'
 
-
-
-def get_model_pretrained():
-    model = torchvision.models.resnet18(pretrained=True)
-    for param in list(model.parameters())[:-10]:
-        param.requires_grad = False
-
-    in_features = model.fc.in_features
-    model.fc = torch.nn.Linear(in_features, 200)
-
-    return model
-
-
-def conv(cin, cout, kernel_size=(3,3), padding=(1,1), stride=(1,1)):
-    return nn.Sequential(
-        nn.Conv2d(cin, cout, kernel_size, padding=padding, stride=stride),
-        nn.ReLU(),
-        nn.BatchNorm2d(cout),
-        nn.MaxPool2d((2,2))
-    )
-
-
-def get_model(cin=3, cout=200):
-    base = 64
-    return torch.nn.Sequential(
-        conv(cin, base), # 3, 64, 64 -> 64*32*32
-        conv(base, base*2), # 64, 32, 32 -> 128*16*16
-        nn.Dropout(0.2),
-        conv(base*2, base*4), # 128, 16, 16 -> 256*8*8
-        conv(base*4, base*8), # 256, 8, 8 -> 512*4*4
-        nn.Flatten(),
-        nn.Dropout(0.2),
-        nn.Linear(512*4*4, 1024),
-        nn.ReLU(),
-        nn.Dropout(0.2),
-        nn.Linear(1024, 200),
-        nn.LogSoftmax(dim=1)
-    )
+BASE_IMG_DIR = 'tiny-imagenet-200/val/images'
+IDS_FILE = 'tiny-imagenet-200/wnids.txt'
+ANNOTATION_FILE = 'tiny-imagenet-200/val/val_annotations.txt'
 
 
 def train_one_epoch(model, dataloader, criterion, optimizer, metric, device, args, profiler):
@@ -143,22 +107,12 @@ def train_model(model, dataloaders, criterion, optimizer, metric, device, args, 
 
 
 def get_test_dataset(transform=None, 
-                     base_img_dir='tiny-imagenet-200/val/images',
-                     ids_file = 'tiny-imagenet-200/wnids.txt', 
-                     annotation_file = 'tiny-imagenet-200/val/val_annotations.txt'):
+                     base_img_dir=BASE_IMG_DIR,
+                     ids_file = IDS_FILE, 
+                     annotation_file = ANNOTATION_FILE):
     
     transform = transform or transforms.ToTensor()
-    
-    with open(ids_file, 'r') as f:
-        ids = f.readlines()
-    ids_map = {val: i for i, val in enumerate(sorted([val.strip() for val in ids]))}    
-    
-    df = pd.read_csv(annotation_file, sep='\t', header=None)    
-    
-    filenames, targets = [], []
-    for i, (fn, tr) in df[[0, 1]].iterrows():
-        filenames.append(fn)
-        targets.append(ids_map[tr])
+    filenames, targets = get_test_data(ids_file, annotation_file)
         
     return ImgsDataset(filenames, targets=targets, base_dir=base_img_dir, transform=transform)
 
@@ -193,23 +147,12 @@ def get_dataloaders(batch_size=200, val_size=0.2):
     return dataloaders
 
 
-def plot_hist(hist, title, ylabel):
-    plt.title(title)
-    plt.grid()
-    plt.xlabel("Epochs")
-    plt.ylabel(ylabel)
-    plt.plot(hist['train'], label='train')
-    plt.plot(hist['val'], label='val')
-    plt.legend()
-    plt.show()
-
-
 def run_training(model, args, profiler):
     device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
     print("device %s" %device)
     model = model.to(device)
 
-    criterion = nn.CrossEntropyLoss()
+    criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.opt_lr)
     metric = Accuracy()
     dataloaders = get_dataloaders(batch_size=args.batch)
@@ -249,10 +192,8 @@ def get_args():
     parser.add_argument('--pretrained',  action='store_true', default=False, help='Train resnet18 pretrained model')
     parser.add_argument('--memory_usage',  action='store_true', default=False, help='Show memory usage')
 
-
     return parser.parse_args()
 
-from time import sleep
 
 def main(pretrained=True, epochs=5):
     args = get_args()

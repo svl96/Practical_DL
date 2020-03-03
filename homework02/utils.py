@@ -1,5 +1,7 @@
 import torch 
 from time import time
+import matplotlib.pyplot as plt
+
 
 class Accuracy(torch.nn.Module):
     def __init__(self):
@@ -46,3 +48,32 @@ class TimeProfiler:
             return 0
         
         return sum(self.timers[name]) / len(self.timers[name])
+
+
+def plot_hist(hist, title, ylabel):
+    plt.title(title)
+    plt.grid()
+    plt.xlabel("Epochs")
+    plt.ylabel(ylabel)
+    plt.plot(hist['train'], label='train')
+    plt.plot(hist['val'], label='val')
+    plt.legend()
+    plt.show()
+
+
+def get_test_data(ids_file, annotation_file):
+        
+    with open(ids_file, 'r') as f:
+        ids = f.readlines()
+    ids_map = {val: i for i, val in enumerate(sorted([val.strip() for val in ids]))}    
+    
+    with open(annotation_file, 'r') as f:
+        annotations = f.readlines()
+    data = [row.split('\t')[:2] for row in annotations]
+    
+    filenames, targets = [], []
+    for fn, tr in data:
+        filenames.append(fn)
+        targets.append(ids_map[tr])
+    
+    return filenames, targets
