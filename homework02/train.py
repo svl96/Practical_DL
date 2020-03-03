@@ -1,63 +1,23 @@
 import numpy as np
 from time import time
 import matplotlib.pyplot as plt
+import pandas as pd
+import argparse
 
 import torch
 from torch import nn
 import torchvision
 from torchvision import transforms
 from torch.utils.data import DataLoader
-import pandas as pd
 from dataset import ImgsDataset
 import matplotlib.pyplot as plt
-import argparse
+from torch.utils.checkpoint import checkpoint_sequential
+from utils import TimeProfiler, Accuracy
 
 
-class TimeProfiler:
-    def __init__(self):
-        self.timers = {}
-        self.timer_step = {}
+EPOCH_TIMER = 'epoch_timer'
+BATCH_TIMER = 'batch_timer'
 
-    def reset(self):
-        self.timers = {}
-        self.timer_step = {}
-    
-    def add_timer(self, name):
-        self.timers[name] = []
-        self.timer_step[name] = -1
-
-    def has_timer(self, name):
-        return name in self.timers and name in self.timer_step
-    
-    def start_timer(self, name):
-        if not self.has_timer(name):
-            self.add_timer(name)
-        
-        self.timer_step[name] = time()
-
-    def loop_timer(self, name):
-        if not self.has_timer(name):
-            self.start_timer()
-            return
-        
-        self.timers[name].append(time() - self.timer_step[name])
-        self.timer_step[name] = time()
-    
-        return self.timers[name]
-    
-    def get_mean(self, name):
-        if not self.has_timer(name) or len(self.timers[name] == 0):
-            return 0
-        
-        return sum(self.timers[name]) / len(self.timers[name])
-
-
-class Accuracy(torch.nn.Module):
-    def __init__(self):
-        super(Accuracy, self).__init__()
-
-    def forward(self, outputs, targets):
-        return torch.mean((outputs == targets).double())
 
 
 def get_model_pretrained():
@@ -98,20 +58,20 @@ def get_model(cin=3, cout=200):
     )
 
 
-def train_one_epoch(model, dataloader, criterion, optimizer, metric, device):
+def train_one_epoch(model, dataloader, criterion, optimizer, metric, device, args, profiler):
     total_loss = 0
     total_acc = 0
     model.train(True)
-    checkpoint_size = 6
     optimizer.zero_grad()
+
+    profiler.start_timer(BATCH_TIMER)
 
     for i, (samples, targets) in enumerate(dataloader):
         samples = samples.to(device)
         targets = targets.to(device)
 
-
-        if checkpoint_size > 0:
-            outputs = torch.utils.checkpoint.checkpoint_sequential(model, checkpoint_size, samples)
+        if args.checkpoint > 0:
+            outputs = checkpoint_sequential(model, args.checkpoint, samples)
         else:
             outputs = model(samples)
         loss = criterion(outputs, targets)
@@ -119,10 +79,12 @@ def train_one_epoch(model, dataloader, criterion, optimizer, metric, device):
         total_acc += metric(preds, targets).item()
 
         loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
+        if args.batch_count <= 1 or (i+1) % args.batch_count == 0:
+            optimizer.step()
+            optimizer.zero_grad()
 
         total_loss += loss.item()
+        profiler.loop_timer(BATCH_TIMER)
 
     i += 1
     total_loss /= i
@@ -153,16 +115,21 @@ def eval_model(model, dataloader, criterion, metric, device):
     return total_loss, total_acc
 
 
-def train_model(model, dataloaders, criterion, optimizer, metric, device, epochs=10):
+def train_model(model, dataloaders, criterion, optimizer, metric, device, args, profiler):
     loss_hist = {'train': [], 'val': []}
     acc_hist = {'train': [], 'val': []}
-    
-    start = time()
+    epochs = args.epochs
+    profiler.start_timer(EPOCH_TIMER)
+
     for epoch in range(epochs):
-        loss, acc = train_one_epoch(model, dataloaders['train'], criterion, optimizer, metric, device)
+        loss, acc = train_one_epoch(model, dataloaders['train'], criterion,
+                                    optimizer, metric, device, args, profiler)
+        
         val_loss, val_acc = eval_model(model, dataloaders['val'], criterion, metric, device)
-        print("Epoch [{}/{}] Time: {:.2f}s; Loss: {:.4f}; Accuracy: {:.4f}; ValLoss: {:.4f}; ValAccuracy: {:.4f}".format(
-              epoch + 1, epochs, time() - start, loss, acc, val_loss, val_acc))
+        print("Epoch [{}/{}] Time: {:.2f}s; BatchTime:{:.2f}s; Loss: {:.4f}; Accuracy: {:.4f}; ValLoss: {:.4f}; ValAccuracy: {:.4f}".format(
+                epoch + 1, epochs, profiler.loop_timer(EPOCH_TIMER),
+                profiler.get_mean(BATCH_TIMER), loss, acc, val_loss, val_acc))
+            
         loss_hist['train'].append(loss)
         loss_hist['val'].append(val_loss)
         
@@ -171,7 +138,6 @@ def train_model(model, dataloaders, criterion, optimizer, metric, device, epochs
         
         if sum(acc_hist['val'][-2:])/2 > 0.4:
             break
-        start = time()
 
     return model, loss_hist, acc_hist
 
@@ -238,25 +204,27 @@ def plot_hist(hist, title, ylabel):
     plt.show()
 
 
-def run_training(model, epochs=15, batch_size=200):
+def run_training(model, args, profiler):
     device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
     print("device %s" %device)
     model = model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    print(optimizer)
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.opt_lr)
     metric = Accuracy()
-    dataloaders = get_dataloaders(batch_size=batch_size)
+    dataloaders = get_dataloaders(batch_size=args.batch)
     
     print('Run training')
-    model, loss_hist, acc_hist = train_model(model, dataloaders, criterion, optimizer, metric, device, epochs=epochs)
-    # torch.save(model.state_dict(), 'models/model_simple_mod.pth')
+    model, loss_hist, acc_hist = train_model(model, dataloaders, criterion,
+                                             optimizer, metric, device, args, profiler)
+    if args.save_file != '':
+        torch.save(model.state_dict(), args.save_file)
     loss_test, acc_test = eval_model(model, dataloaders['test'], criterion, metric, device)
     print("\nTEST Loss: {:.4f}; Accuracy: {:.4f}\n".format(loss_test, acc_test))
     
-    # plot_hist(loss_hist, "Loss History", 'CrossEntropyLoss')
-    # plot_hist(acc_hist, "Accuracy History", 'Accuracy')
+    if args.plot_hist:
+        plot_hist(loss_hist, "Loss History", 'CrossEntropyLoss')
+        plot_hist(acc_hist, "Accuracy History", 'Accuracy')
     
     return model, loss_test, acc_test
 
@@ -271,27 +239,35 @@ def load_model(path):
 
 def get_args():
     parser = argparse.ArgumentParser(description='Image Classifier training')
-    # parser.add_argument('resfile', type=str, help='Result file to save')
+    parser.add_argument('--save_file', type=str, default='', help='File to save model')
     parser.add_argument('--epochs', type=int, default=10, help='Number of epochs for training')
     parser.add_argument('--batch', type=int, default=200, help='Size of Batch')
     parser.add_argument('--checkpoint', type=int, default=-1, help='Size of checkpoint')
-    parser.add_argument("--batch_mult", type=int, default=1, help='Multiplier for computational batch size equals "total=batch_mult*batch"')
-    
+    parser.add_argument('--opt_lr', type=float, default=0.001, help='Learning rate for optimizer')
+    parser.add_argument("--batch_count", type=int, default=1, help='Multiplier for computational batch size equals "total=batch_count*batch"')
+    parser.add_argument('--plot_hist', action='store_true', default=False, help='Plot history of training')
+    parser.add_argument('--pretrained',  action='store_true', default=False, help='Train resnet18 pretrained model')
+    parser.add_argument('--memory_usage',  action='store_true', default=False, help='Show memory usage')
+
+
     return parser.parse_args()
 
 from time import sleep
 
-def main(pretrained=False, epochs=5):
+def main(pretrained=True, epochs=5):
     args = get_args()
-    if pretrained:
+    if args.pretrained:
         print("Pretrained mode")
         model = get_model_pretrained()
     else:
         print("train model")
         model = get_model()
-    run_training(model, epochs=args.epochs, batch_size=args.batch) 
 
-    print(f"Peak memory usage by Pytorch tensors: {(torch.cuda.max_memory_allocated() / 1024 / 1024):.2f} Mb")
+    profiler = TimeProfiler()
+
+    run_training(model, args, profiler) 
+    if args.memory_usage:
+        print(f"Peak memory usage by Pytorch tensors: {(torch.cuda.max_memory_allocated() / 1024 / 1024):.2f} Mb")
 
 
 if __name__ == '__main__':
