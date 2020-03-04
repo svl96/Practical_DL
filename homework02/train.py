@@ -1,28 +1,27 @@
-import numpy as np
-from time import time
-import pandas as pd
-import argparse
-
 import torch
 import torchvision
 from torchvision import transforms
 from torch.utils.data import DataLoader
 from dataset import ImgsDataset
-import matplotlib.pyplot as plt
 from torch.utils.checkpoint import checkpoint_sequential
+
+import argparse
 from utils import TimeProfiler, Accuracy, plot_hist, get_test_data
 from cls_models import get_model, get_model_pretrained
 
 
 EPOCH_TIMER = 'epoch_timer'
 BATCH_TIMER = 'batch_timer'
-
-BASE_IMG_DIR = 'tiny-imagenet-200/val/images'
+TRAIN_IMG_DIR = 'tiny-imagenet-200/train'
+VAL_IMG_DIR = 'tiny-imagenet-200/val/images'
 IDS_FILE = 'tiny-imagenet-200/wnids.txt'
 ANNOTATION_FILE = 'tiny-imagenet-200/val/val_annotations.txt'
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
+profiler = TimeProfiler()
 
-def train_one_epoch(model, dataloader, criterion, optimizer, metric, device, args, profiler):
+
+def train_one_epoch(model, dataloader, criterion, optimizer, metric, args):
     total_loss = 0
     total_acc = 0
     model.train(True)
@@ -58,7 +57,7 @@ def train_one_epoch(model, dataloader, criterion, optimizer, metric, device, arg
 
 
 @torch.no_grad()
-def eval_model(model, dataloader, criterion, metric, device):
+def eval_model(model, dataloader, criterion, metric):
     total_loss = 0
     total_acc = 0
     model.eval()
@@ -79,7 +78,7 @@ def eval_model(model, dataloader, criterion, metric, device):
     return total_loss, total_acc
 
 
-def train_model(model, dataloaders, criterion, optimizer, metric, device, args, profiler):
+def train_model(model, dataloaders, criterion, optimizer, metric, args):
     loss_hist = {'train': [], 'val': []}
     acc_hist = {'train': [], 'val': []}
     epochs = args.epochs
@@ -87,9 +86,9 @@ def train_model(model, dataloaders, criterion, optimizer, metric, device, args, 
 
     for epoch in range(epochs):
         loss, acc = train_one_epoch(model, dataloaders['train'], criterion,
-                                    optimizer, metric, device, args, profiler)
+                                    optimizer, metric, args)
         
-        val_loss, val_acc = eval_model(model, dataloaders['val'], criterion, metric, device)
+        val_loss, val_acc = eval_model(model, dataloaders['val'], criterion, metric)
         print("Epoch [{}/{}] Time: {:.2f}s; BatchTime:{:.2f}s; Loss: {:.4f}; Accuracy: {:.4f}; ValLoss: {:.4f}; ValAccuracy: {:.4f}".format(
                 epoch + 1, epochs, profiler.loop_timer(EPOCH_TIMER),
                 profiler.get_mean(BATCH_TIMER), loss, acc, val_loss, val_acc))
@@ -100,16 +99,14 @@ def train_model(model, dataloaders, criterion, optimizer, metric, device, args, 
         acc_hist['train'].append(acc)
         acc_hist['val'].append(val_acc)
         
-        if sum(acc_hist['val'][-2:])/2 > 0.4:
+        if sum(acc_hist['val'][-2:])/2 > args.stop_accuracy:
             break
 
     return model, loss_hist, acc_hist
 
 
-def get_test_dataset(transform=None, 
-                     base_img_dir=BASE_IMG_DIR,
-                     ids_file = IDS_FILE, 
-                     annotation_file = ANNOTATION_FILE):
+def get_test_dataset(transform=None, base_img_dir=VAL_IMG_DIR,
+                     ids_file = IDS_FILE, annotation_file = ANNOTATION_FILE):
     
     transform = transform or transforms.ToTensor()
     filenames, targets = get_test_data(ids_file, annotation_file)
@@ -117,7 +114,7 @@ def get_test_dataset(transform=None,
     return ImgsDataset(filenames, targets=targets, base_dir=base_img_dir, transform=transform)
 
 
-def get_dataloaders(batch_size=200, val_size=0.2):
+def get_dataloaders(batch_size=200, val_size=0.2, num_workers=4):
     print("Batch size %d" %batch_size)
     transform = {
         'train': transforms.Compose([
@@ -131,7 +128,7 @@ def get_dataloaders(batch_size=200, val_size=0.2):
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
     }
     
-    dataset = torchvision.datasets.ImageFolder('tiny-imagenet-200/train', transform=transform['train'])
+    dataset = torchvision.datasets.ImageFolder(TRAIN_IMG_DIR, transform=transform['train'])
     total_size = len(dataset)
     val_size = int(total_size * val_size if val_size < 1 else val_size)
     train_size = total_size - val_size
@@ -139,30 +136,29 @@ def get_dataloaders(batch_size=200, val_size=0.2):
     train_dataset, val_dataset = torch.utils.data.random_split(dataset, [train_size, val_size])
     test_dataset = get_test_dataset(transform=transform['test'])
     dataloaders = {
-        'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4),
-        'val': DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4),
-        'test': DataLoader(val_dataset, batch_size=batch_size, shuffle=False,  num_workers=4),
+        'train': DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers),
+        'val': DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers),
+        'test': DataLoader(val_dataset, batch_size=batch_size, shuffle=False,  num_workers=num_workers),
     }
     
     return dataloaders
 
 
-def run_training(model, args, profiler):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else 'cpu')
+def run_training(model, args):
     print("device %s" %device)
     model = model.to(device)
 
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.opt_lr)
     metric = Accuracy()
-    dataloaders = get_dataloaders(batch_size=args.batch)
+    dataloaders = get_dataloaders(batch_size=args.batch, num_workers=args.num_workers)
     
     print('Run training')
     model, loss_hist, acc_hist = train_model(model, dataloaders, criterion,
-                                             optimizer, metric, device, args, profiler)
+                                             optimizer, metric, args)
     if args.save_file != '':
         torch.save(model.state_dict(), args.save_file)
-    loss_test, acc_test = eval_model(model, dataloaders['test'], criterion, metric, device)
+    loss_test, acc_test = eval_model(model, dataloaders['test'], criterion, metric)
     print("\nTEST Loss: {:.4f}; Accuracy: {:.4f}\n".format(loss_test, acc_test))
     
     if args.plot_hist:
@@ -191,22 +187,19 @@ def get_args():
     parser.add_argument('--plot_hist', action='store_true', default=False, help='Plot history of training')
     parser.add_argument('--pretrained',  action='store_true', default=False, help='Train resnet18 pretrained model')
     parser.add_argument('--memory_usage',  action='store_true', default=False, help='Show memory usage')
+    parser.add_argument('--num_workers', type=int, default=4, help='Number of workers for dataloader')
+    parser.add_argument('--stop_accuracy', type=float, default=0.4, help='Accuracy for early stopping')
 
     return parser.parse_args()
 
 
 def main(pretrained=True, epochs=5):
     args = get_args()
-    if args.pretrained:
-        print("Pretrained mode")
-        model = get_model_pretrained()
-    else:
-        print("train model")
-        model = get_model()
+    profiler.reset()
 
-    profiler = TimeProfiler()
+    model = get_model_pretrained() if args.pretrained else get_model()
 
-    run_training(model, args, profiler) 
+    run_training(model, args) 
     if args.memory_usage:
         print(f"Peak memory usage by Pytorch tensors: {(torch.cuda.max_memory_allocated() / 1024 / 1024):.2f} Mb")
 
