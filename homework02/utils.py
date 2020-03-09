@@ -1,6 +1,7 @@
 import torch 
 from time import time
 import matplotlib.pyplot as plt
+import torch.nn.functional as F
 
 
 class Accuracy(torch.nn.Module):
@@ -8,7 +9,37 @@ class Accuracy(torch.nn.Module):
         super(Accuracy, self).__init__()
 
     def forward(self, outputs, targets):
-        return torch.mean((outputs == targets).double())
+        _, preds = torch.max(outputs, 1)
+        return torch.mean((preds == targets).double())
+
+
+class DistillationAccuracy(torch.nn.Module):
+    def __init__(self):
+        super(DistillationAccuracy, self).__init__()
+
+    def forward(self, outputs, targets):
+        student, teacher = outputs
+        _, preds = torch.max(student, 1)
+        return torch.mean((preds == targets).double())
+
+
+class DistillationLoss(torch.nn.Module):
+    def __init__(self, tau=20, alpha=0.7):
+        super(DistillationLoss, self).__init__()
+        self.tau = tau
+        self.alpha = alpha
+        self.KLDiv_criterion = torch.nn.KLDivLoss()
+        self.cross_entropy = torch.nn.CrossEntropyLoss()
+
+    def forward(self, outputs, targets):
+        student_out, teacher_out = outputs
+
+        KLDiv_loss = self.KLDiv_criterion(F.log_softmax(student_out/self.tau),
+                                         F.softmax(teacher_out/self.tau)) 
+
+        cross_entropy_loss = self.cross_entropy(student_out, targets)
+
+        return self.alpha * KLDiv_loss + (1 - self.alpha) * cross_entropy_loss
 
 
 class TimeProfiler:
@@ -19,17 +50,13 @@ class TimeProfiler:
     def reset(self):
         self.timers = {}
         self.timer_step = {}
-    
-    def add_timer(self, name):
-        self.timers[name] = []
-        self.timer_step[name] = -1
 
     def has_timer(self, name):
         return (name in self.timers) and (name in self.timer_step)
     
     def start_timer(self, name):
         if not self.has_timer(name):
-            self.add_timer(name)
+            self.timers[name] = []
         
         self.timer_step[name] = time()
 
@@ -44,16 +71,16 @@ class TimeProfiler:
         return self.timers[name][-1]
     
     def get_mean(self, name):
-        if not self.has_timer(name) or len(self.timers[name]) == 0:
+        if (not self.has_timer(name)) or (len(self.timers[name]) == 0):
             return 0
         
         return sum(self.timers[name]) / len(self.timers[name])
 
 
-def plot_hist(hist, title, ylabel):
+def plot_hist(hist, title, ylabel, xlabel='Epochs'):
     plt.title(title)
     plt.grid()
-    plt.xlabel("Epochs")
+    plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.plot(hist['train'], label='train')
     plt.plot(hist['val'], label='val')

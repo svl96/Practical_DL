@@ -8,7 +8,7 @@ from torch.utils.checkpoint import checkpoint_sequential
 import argparse
 from utils import TimeProfiler, Accuracy, plot_hist, get_test_data
 from cls_models import get_model, get_model_pretrained
-
+import logging 
 
 EPOCH_TIMER = 'epoch_timer'
 BATCH_TIMER = 'batch_timer'
@@ -38,8 +38,7 @@ def train_one_epoch(model, dataloader, criterion, optimizer, metric, args):
         else:
             outputs = model(samples)
         loss = criterion(outputs, targets)
-        _, preds = torch.max(outputs, 1)
-        total_acc += metric(preds, targets).item()
+        total_acc += metric(outputs, targets).item()
 
         loss.backward()
         if args.batch_count <= 1 or (i+1) % args.batch_count == 0:
@@ -68,8 +67,7 @@ def eval_model(model, dataloader, criterion, metric):
 
         outputs = model(samples)
         total_loss += criterion(outputs, targets).item()
-        _, preds = torch.max(outputs, 1)
-        total_acc += metric(preds, targets).item()
+        total_acc += metric(outputs, targets).item()
 
     i += 1
     total_loss /= i
@@ -146,6 +144,7 @@ def get_dataloaders(batch_size=200, val_size=0.2, num_workers=4):
 
 def run_training(model, args):
     print("device %s" %device)
+    profiler.reset()
     model = model.to(device)
 
     criterion = torch.nn.CrossEntropyLoss()
