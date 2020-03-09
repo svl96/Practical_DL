@@ -77,7 +77,7 @@ class TimeProfiler:
         return sum(self.timers[name]) / len(self.timers[name])
 
 
-def plot_hist(hist, title, ylabel, xlabel='Epochs'):
+def plot_hist(hist, title, ylabel, xlabel='Epochs', filename='plot.png'):
     plt.title(title)
     plt.grid()
     plt.xlabel(xlabel)
@@ -85,8 +85,8 @@ def plot_hist(hist, title, ylabel, xlabel='Epochs'):
     plt.plot(hist['train'], label='train')
     plt.plot(hist['val'], label='val')
     plt.legend()
+    plt.savefig(filename)
     plt.show()
-
 
 def get_test_data(ids_file, annotation_file):
         

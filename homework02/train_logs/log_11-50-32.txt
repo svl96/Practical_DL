@@ -1,0 +1,2 @@
+Logging Timestamp 11-50-32
+Namespace(batch=200, batch_count=1, checkpoint=-1, epochs=10, memory_usage=False, num_workers=4, opt_lr=0.001, out='', plot_hist=False, pretrained=False, save_best=False, stop_accuracy=0.4)

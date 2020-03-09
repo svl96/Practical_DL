@@ -1,0 +1,11 @@
+Logging Timestamp 12-19-51
+
+Namespace(batch=200, batch_count=5, checkpoint=-1, epochs=1, memory_usage=True, model='standard', num_workers=4, opt_lr=0.001, out='saved_models/model_12-19-51.txt', plot_hist=False, pretrained=False, save_best=True, stop_accuracy=0.4, teacher_file='')
+device cuda:0
+Batch size 200
+Run training
+Epoch [1/1] Time: 72.50s; BatchTime:0.15s; Loss: 4.4543; Accuracy: 0.0909; ValLoss: 4.0782; ValAccuracy: 0.1347
+
+TEST Loss: 4.0773; Accuracy: 0.1327
+
+Peak memory usage by Pytorch tensors: 1500.44 Mb
