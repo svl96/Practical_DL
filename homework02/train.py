@@ -10,6 +10,7 @@ from utils import TimeProfiler, Accuracy, plot_hist, get_test_data
 from cls_models import get_model
 import logging 
 from datetime import datetime
+from utils import DistillationAccuracy, DistillationLoss
 
 
 EPOCH_TIMER = 'epoch_timer'
@@ -157,9 +158,14 @@ def run_training(model, args):
     profiler.reset()
     model = model.to(device)
 
-    criterion = torch.nn.CrossEntropyLoss()
+    if args.model == 'distill':
+        metric = DistillationAccuracy()
+        criterion = DistillationLoss()
+    else:
+        metric = Accuracy()
+        criterion = torch.nn.CrossEntropyLoss()
+
     optimizer = torch.optim.Adam(model.parameters(), lr=args.opt_lr)
-    metric = Accuracy()
     dataloaders = get_dataloaders(batch_size=args.batch, num_workers=args.num_workers)
     
     logging.info('Run training')

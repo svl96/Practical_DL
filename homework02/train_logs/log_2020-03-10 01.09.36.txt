@@ -1,0 +1,40 @@
+Logging Timestamp 2020-03-10 01.09.36
+
+Namespace(batch=100, batch_count=1, checkpoint=-1, epochs=30, memory_usage=True, model='distill', num_workers=4, opt_lr=0.001, out='saved_models/model_distill_2020-03-10 01.09.36.pth', plot_hist=True, pretrained=False, save_best=True, stop_accuracy=0.4, teacher_file='model_standard.pth')
+device cuda:0
+Batch size 100
+Run training
+Epoch [1/30] Time: 55.57s; BatchTime:0.05s; Loss: 1.5109; Accuracy: 0.0409; ValLoss: 1.4497; ValAccuracy: 0.0589
+Epoch [2/30] Time: 51.37s; BatchTime:0.05s; Loss: 1.3966; Accuracy: 0.0784; ValLoss: 1.3702; ValAccuracy: 0.0870
+Epoch [3/30] Time: 51.88s; BatchTime:0.05s; Loss: 1.3340; Accuracy: 0.1004; ValLoss: 1.3145; ValAccuracy: 0.1116
+Epoch [4/30] Time: 51.41s; BatchTime:0.05s; Loss: 1.2898; Accuracy: 0.1188; ValLoss: 1.2970; ValAccuracy: 0.1187
+Epoch [5/30] Time: 51.38s; BatchTime:0.05s; Loss: 1.2572; Accuracy: 0.1352; ValLoss: 1.2625; ValAccuracy: 0.1315
+Epoch [6/30] Time: 51.36s; BatchTime:0.05s; Loss: 1.2342; Accuracy: 0.1446; ValLoss: 1.2410; ValAccuracy: 0.1425
+Epoch [7/30] Time: 51.47s; BatchTime:0.05s; Loss: 1.2164; Accuracy: 0.1543; ValLoss: 1.2310; ValAccuracy: 0.1458
+Epoch [8/30] Time: 52.12s; BatchTime:0.05s; Loss: 1.2022; Accuracy: 0.1618; ValLoss: 1.2241; ValAccuracy: 0.1501
+Epoch [9/30] Time: 51.83s; BatchTime:0.05s; Loss: 1.1895; Accuracy: 0.1652; ValLoss: 1.2149; ValAccuracy: 0.1571
+Epoch [10/30] Time: 51.32s; BatchTime:0.05s; Loss: 1.1801; Accuracy: 0.1702; ValLoss: 1.1993; ValAccuracy: 0.1640
+Epoch [11/30] Time: 51.35s; BatchTime:0.05s; Loss: 1.1725; Accuracy: 0.1760; ValLoss: 1.1878; ValAccuracy: 0.1655
+Epoch [12/30] Time: 51.23s; BatchTime:0.05s; Loss: 1.1647; Accuracy: 0.1773; ValLoss: 1.1933; ValAccuracy: 0.1686
+Epoch [13/30] Time: 51.55s; BatchTime:0.05s; Loss: 1.1587; Accuracy: 0.1817; ValLoss: 1.1773; ValAccuracy: 0.1736
+Epoch [14/30] Time: 51.36s; BatchTime:0.05s; Loss: 1.1549; Accuracy: 0.1833; ValLoss: 1.1747; ValAccuracy: 0.1740
+Epoch [15/30] Time: 52.00s; BatchTime:0.05s; Loss: 1.1496; Accuracy: 0.1873; ValLoss: 1.1644; ValAccuracy: 0.1822
+Epoch [16/30] Time: 51.88s; BatchTime:0.05s; Loss: 1.1457; Accuracy: 0.1872; ValLoss: 1.1725; ValAccuracy: 0.1750
+Epoch [17/30] Time: 51.61s; BatchTime:0.05s; Loss: 1.1412; Accuracy: 0.1893; ValLoss: 1.1674; ValAccuracy: 0.1835
+Epoch [18/30] Time: 51.48s; BatchTime:0.05s; Loss: 1.1376; Accuracy: 0.1915; ValLoss: 1.1534; ValAccuracy: 0.1885
+Epoch [19/30] Time: 51.40s; BatchTime:0.05s; Loss: 1.1340; Accuracy: 0.1925; ValLoss: 1.1655; ValAccuracy: 0.1798
+Epoch [20/30] Time: 51.48s; BatchTime:0.05s; Loss: 1.1325; Accuracy: 0.1941; ValLoss: 1.1556; ValAccuracy: 0.1848
+Epoch [21/30] Time: 51.27s; BatchTime:0.05s; Loss: 1.1293; Accuracy: 0.1951; ValLoss: 1.1477; ValAccuracy: 0.1931
+Epoch [22/30] Time: 51.63s; BatchTime:0.05s; Loss: 1.1265; Accuracy: 0.1981; ValLoss: 1.1465; ValAccuracy: 0.1900
+Epoch [23/30] Time: 51.33s; BatchTime:0.05s; Loss: 1.1257; Accuracy: 0.1991; ValLoss: 1.1529; ValAccuracy: 0.1855
+Epoch [24/30] Time: 51.29s; BatchTime:0.05s; Loss: 1.1221; Accuracy: 0.1995; ValLoss: 1.1506; ValAccuracy: 0.1877
+Epoch [25/30] Time: 51.39s; BatchTime:0.05s; Loss: 1.1217; Accuracy: 0.2000; ValLoss: 1.1443; ValAccuracy: 0.1909
+Epoch [26/30] Time: 51.25s; BatchTime:0.05s; Loss: 1.1181; Accuracy: 0.2025; ValLoss: 1.1406; ValAccuracy: 0.1922
+Epoch [27/30] Time: 51.42s; BatchTime:0.05s; Loss: 1.1160; Accuracy: 0.2028; ValLoss: 1.1409; ValAccuracy: 0.1932
+Epoch [28/30] Time: 51.42s; BatchTime:0.05s; Loss: 1.1150; Accuracy: 0.2029; ValLoss: 1.1394; ValAccuracy: 0.1901
+Epoch [29/30] Time: 51.14s; BatchTime:0.05s; Loss: 1.1131; Accuracy: 0.2031; ValLoss: 1.1472; ValAccuracy: 0.1879
+Epoch [30/30] Time: 51.35s; BatchTime:0.05s; Loss: 1.1120; Accuracy: 0.2048; ValLoss: 1.1407; ValAccuracy: 0.1912
+
+TEST Loss: 1.1410; Accuracy: 0.1909
+
+Peak memory usage by Pytorch tensors: 211.36 Mb

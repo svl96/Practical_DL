@@ -1,0 +1,12 @@
+Logging Timestamp 2020-03-09 15.57.13
+
+Namespace(batch=100, batch_count=1, checkpoint=-1, epochs=2, memory_usage=True, model='distill', num_workers=4, opt_lr=0.001, out='saved_models/model_distill_2020-03-09 15.57.13.pth', plot_hist=True, pretrained=False, save_best=True, stop_accuracy=0.4, teacher_file='model_standard.pth')
+device cuda:0
+Batch size 100
+Run training
+Epoch [1/2] Time: 52.90s; BatchTime:0.05s; Loss: 1.4727; Accuracy: 0.5041; ValLoss: 1.3985; ValAccuracy: 0.5235
+Epoch [2/2] Time: 52.26s; BatchTime:0.05s; Loss: 1.3612; Accuracy: 0.5042; ValLoss: 1.3278; ValAccuracy: 0.5225
+
+TEST Loss: 1.3984; Accuracy: 0.5265
+
+Peak memory usage by Pytorch tensors: 211.36 Mb

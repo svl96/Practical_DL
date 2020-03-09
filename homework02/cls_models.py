@@ -32,10 +32,10 @@ class DistillModel(nn.Module):
 def get_distill_model(teacher_file='', tau=1, **kwargs):
     if teacher_file == '':
         return
-
+    
     teacher = get_standard_model()
     teacher.load_state_dict(torch.load(teacher_file))
-    student = get_small_model()
+    student = get_small2_model()
 
     return DistillModel(teacher, student, tau=tau)
 
@@ -82,7 +82,7 @@ def get_standard_model(cin=3, cout=200, base=64, softmax=False):
     )
 
 
-def get_small_model(cin=3, cout=200, base=64, softmax=False):
+def get_small_model(cin=3, cout=200, base=16, softmax=False):
     return nn.Sequential(
         conv(cin, base), # 3, 64, 64 -> 64*32*32
         conv(base, base*2), # 64, 32, 32 -> 128*16*16
@@ -93,13 +93,24 @@ def get_small_model(cin=3, cout=200, base=64, softmax=False):
     )
 
 
+def get_small2_model(cin=3, cout=200, base=32, softmax=False):
+    return nn.Sequential(
+        conv(cin, base), # 3, 64, 64 -> 64*32*32
+        conv(base, base*2), # 64, 32, 32 -> 128*16*16
+        # nn.AdaptiveAvgPool2d(output_size=(1,1)),
+        nn.Flatten(),
+        nn.Linear(base*2*16*16, 200),
+        # nn.LogSoftmax(dim=1)
+    )
+
 def get_model(name, **kwards):
     models = {
         'resnet': get_model_pretrained,
         'big': get_big_model,
         'standard': get_standard_model,
         'small': get_small_model,
-        'distill': get_distill_model
+        'distill': get_distill_model,
+        'small2': get_small2_model,
     }
 
     return models[name](**kwards)

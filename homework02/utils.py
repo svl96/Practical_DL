@@ -24,7 +24,7 @@ class DistillationAccuracy(torch.nn.Module):
 
 
 class DistillationLoss(torch.nn.Module):
-    def __init__(self, tau=20, alpha=0.7):
+    def __init__(self, tau=20, alpha=0.5):
         super(DistillationLoss, self).__init__()
         self.tau = tau
         self.alpha = alpha
@@ -35,9 +35,12 @@ class DistillationLoss(torch.nn.Module):
         student_out, teacher_out = outputs
 
         KLDiv_loss = self.KLDiv_criterion(F.log_softmax(student_out/self.tau),
-                                         F.softmax(teacher_out/self.tau)) 
+                                         F.softmax(teacher_out/self.tau)) * (self.tau * self.tau * 2)
 
-        cross_entropy_loss = self.cross_entropy(student_out, targets)
+        # KLDiv_loss = self.KLDiv_criterion(student_out,
+        #                                  teacher_out) * (2)
+
+        cross_entropy_loss = self.cross_entropy(F.log_softmax(student_out), targets)
 
         return self.alpha * KLDiv_loss + (1 - self.alpha) * cross_entropy_loss
 
