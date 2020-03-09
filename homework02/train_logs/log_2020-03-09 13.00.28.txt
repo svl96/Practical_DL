@@ -1,0 +1,11 @@
+Logging Timestamp 2020-03-09 13.00.28
+
+Namespace(batch=200, batch_count=1, checkpoint=-1, epochs=2, memory_usage=False, model='standard', num_workers=4, opt_lr=0.001, out='saved_models/model_standard_2020-03-09 13.00.28.txt', plot_hist=False, pretrained=False, save_best=True, stop_accuracy=0.4, teacher_file='')
+device cuda:0
+Batch size 200
+Run training
+Epoch [1/2] Time: 71.07s; BatchTime:0.15s; Loss: 4.2169; Accuracy: 0.1175; ValLoss: 3.8208; ValAccuracy: 0.1678
+Epoch [2/2] Time: 70.93s; BatchTime:0.15s; Loss: 3.3600; Accuracy: 0.2499; ValLoss: 3.2819; ValAccuracy: 0.2638
+
+TEST Loss: 3.2794; Accuracy: 0.2632
+

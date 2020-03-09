@@ -85,7 +85,7 @@ def train_model(model, dataloaders, criterion, optimizer, metric, args):
     epochs = args.epochs
     profiler.start_timer(EPOCH_TIMER)
 
-    min_val_acc = 100
+    max_val_acc = 0
 
     for epoch in range(epochs):
         loss, acc = train_one_epoch(model, dataloaders['train'], criterion,
@@ -102,8 +102,8 @@ def train_model(model, dataloaders, criterion, optimizer, metric, args):
         acc_hist['train'].append(acc)
         acc_hist['val'].append(val_acc)
 
-        if val_acc < min_val_acc:
-            min_val_acc = val_acc
+        if val_acc > max_val_acc:
+            max_val_acc = val_acc
             if args.out and args.save_best:
                 torch.save(model.state_dict(), args.out)
         
@@ -167,6 +167,8 @@ def run_training(model, args):
                                              optimizer, metric, args)
     # if args.out != '':
     #     torch.save(model.state_dict(), args.out)
+    if args.out and args.save_best:
+        model.load_state_dict(torch.load(args.out))
     loss_test, acc_test = eval_model(model, dataloaders['test'], criterion, metric)
     logging.info("\nTEST Loss: {:.4f}; Accuracy: {:.4f}\n".format(loss_test, acc_test))
     
@@ -213,7 +215,7 @@ def main():
     args = get_args()
     profiler.reset()
     if args.out == '':
-        args.out = 'saved_models/model_%s_%s.txt' % (args.model, ts)
+        args.out = 'saved_models/model_%s_%s.pth' % (args.model, ts)
     logging.info(args)
 
     model = get_model(args.model, teacher_file=args.teacher_file) if args.model=='distill' else get_model(args.model)
@@ -221,6 +223,9 @@ def main():
     run_training(model, args) 
     if args.memory_usage:
         logging.info(f"Peak memory usage by Pytorch tensors: {(torch.cuda.max_memory_allocated() / 1024 / 1024):.2f} Mb")
+
+    with open(logfile, 'r') as f:
+        print(f.read())
 
 
 if __name__ == '__main__':

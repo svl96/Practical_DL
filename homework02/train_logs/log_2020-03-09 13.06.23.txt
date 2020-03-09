@@ -1,0 +1,12 @@
+Logging Timestamp 2020-03-09 13.06.23
+
+Namespace(batch=200, batch_count=1, checkpoint=-1, epochs=2, memory_usage=True, model='standard', num_workers=4, opt_lr=0.001, out='saved_models/model_standard_2020-03-09 13.06.23.pth', plot_hist=False, pretrained=False, save_best=True, stop_accuracy=0.4, teacher_file='')
+device cuda:0
+Batch size 200
+Run training
+Epoch [1/2] Time: 71.54s; BatchTime:0.15s; Loss: 4.2160; Accuracy: 0.1175; ValLoss: 3.7632; ValAccuracy: 0.1828
+Epoch [2/2] Time: 71.08s; BatchTime:0.15s; Loss: 3.3775; Accuracy: 0.2438; ValLoss: 3.2805; ValAccuracy: 0.2594
+
+TEST Loss: 3.2741; Accuracy: 0.2609
+
+Peak memory usage by Pytorch tensors: 1500.44 Mb
