@@ -74,3 +74,11 @@ debian/reproducible-experiment-platform
 debian/files
 *.substvars
 *.debhelper.log
+*.bmp
+*.JPEG
+*.pth
+*_boxes.txt
+*.png
+*.gz
+*.rar
+*.zip
